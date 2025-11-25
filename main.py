@@ -1,8 +1,9 @@
-import pygame
-import sys
 import math
 import random
+import sys
 from collections import deque
+
+import pygame
 
 # -----------------------------
 # Configuration and Constants
@@ -27,11 +28,11 @@ ORANGE = (255, 165, 0)
 GREY = (200, 200, 200)
 
 # Maze tiles
-WALL = '#'
-DOT = '.'
-POWER = 'o'
-EMPTY = ' '
-GHOST_GATE = '='  # gate in front of the ghost house
+WALL = "#"
+DOT = "."
+POWER = "o"
+EMPTY = " "
+GHOST_GATE = "="  # gate in front of the ghost house
 
 # Directions
 UP = (0, -1)
@@ -43,9 +44,9 @@ STOP = (0, 0)
 OPPOSITE = {UP: DOWN, DOWN: UP, LEFT: RIGHT, RIGHT: LEFT, STOP: STOP}
 
 # Ghost states
-GHOST_NORMAL = 'normal'
-GHOST_VULNERABLE = 'vulnerable'
-GHOST_EYES = 'eyes'
+GHOST_NORMAL = "normal"
+GHOST_VULNERABLE = "vulnerable"
+GHOST_EYES = "eyes"
 
 # -----------------------------
 # Maze Layout (28x31)
@@ -93,6 +94,7 @@ MAZE_LAYOUT = [
 # Utility functions
 # -----------------------------
 
+
 def grid_to_pix(cell):
     x, y = cell
     return int(x * CELL_SIZE + CELL_SIZE / 2), int(y * CELL_SIZE + CELL_SIZE / 2)
@@ -113,13 +115,17 @@ def distance(a, b):
 class Maze:
     def __init__(self):
         self.grid = [list(row) for row in MAZE_LAYOUT[:ROWS]]
-        self.dots_total = sum(row.count(DOT) for row in self.grid) + sum(row.count(POWER) for row in self.grid)
+        self.dots_total = sum(row.count(DOT) for row in self.grid) + sum(
+            row.count(POWER) for row in self.grid
+        )
         # Precompute wall rects for drawing
         self.wall_rects = []
         for y, row in enumerate(self.grid):
             for x, cell in enumerate(row):
                 if cell == WALL:
-                    self.wall_rects.append(pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE))
+                    self.wall_rects.append(
+                        pygame.Rect(x * CELL_SIZE, y * CELL_SIZE, CELL_SIZE, CELL_SIZE)
+                    )
 
     def is_wall(self, cell):
         x, y = cell
@@ -143,11 +149,11 @@ class Maze:
             if self.grid[y][x] == DOT:
                 self.grid[y][x] = EMPTY
                 self.dots_total -= 1
-                return 'dot'
+                return "dot"
             elif self.grid[y][x] == POWER:
                 self.grid[y][x] = EMPTY
                 self.dots_total -= 1
-                return 'power'
+                return "power"
         return None
 
     def remaining_pellets(self):
@@ -220,7 +226,9 @@ class Player:
         if self.at_center_of_cell():
             self.pos = list(grid_to_pix(self.cell))
             # If there is a pending turn and it is valid, do it now
-            if self.next_direction != self.direction and self.can_move(maze, self.cell, self.next_direction):
+            if self.next_direction != self.direction and self.can_move(
+                maze, self.cell, self.next_direction
+            ):
                 self.direction = self.next_direction
             # If blocked ahead, stop
             if not self.can_move(maze, self.cell, self.direction):
@@ -245,14 +253,16 @@ class Player:
             self.pos[1] += dy / dist * step
 
     def draw(self, surface):
-        pygame.draw.circle(surface, YELLOW, (int(self.pos[0]), int(self.pos[1])), CELL_SIZE // 2 - 2)
+        pygame.draw.circle(
+            surface, YELLOW, (int(self.pos[0]), int(self.pos[1])), CELL_SIZE // 2 - 2
+        )
 
 
 # -----------------------------
 # Ghost Class
 # -----------------------------
 class Ghost:
-    def __init__(self, name, color, start_cell, ghost_type='chaser'):
+    def __init__(self, name, color, start_cell, ghost_type="chaser"):
         self.name = name
         self.color = color
         self.start_cell = start_cell
@@ -323,16 +333,24 @@ class Ghost:
                     return d
             return STOP
 
-        if self.state == GHOST_VULNERABLE and self.ghost_type == 'chaser':
+        if self.state == GHOST_VULNERABLE and self.ghost_type == "chaser":
             # When vulnerable, chaser prefers to flee (maximize distance)
-            best = max(valid_dirs, key=lambda d: self._heuristic(self._next_cell(self.cell, d), target_cell))
+            best = max(
+                valid_dirs,
+                key=lambda d: self._heuristic(
+                    self._next_cell(self.cell, d), target_cell
+                ),
+            )
             return best
 
-        if self.ghost_type == 'random':
+        if self.ghost_type == "random":
             return random.choice(valid_dirs)
 
         # chaser minimizes distance heuristic
-        best = min(valid_dirs, key=lambda d: self._heuristic(self._next_cell(self.cell, d), target_cell))
+        best = min(
+            valid_dirs,
+            key=lambda d: self._heuristic(self._next_cell(self.cell, d), target_cell),
+        )
         return best
 
     def _heuristic(self, a, b):
@@ -363,7 +381,9 @@ class Ghost:
             if self.state == GHOST_EYES:
                 target = self.home_cell
             self.direction = self.choose_direction(maze, target)
-            if self.direction != STOP and self.can_move(maze, self.cell, self.direction):
+            if self.direction != STOP and self.can_move(
+                maze, self.cell, self.direction
+            ):
                 self.cell = self._next_cell(self.cell, self.direction)
         # Move toward center
         target_pix = grid_to_pix(self.cell)
@@ -396,10 +416,10 @@ class Ghost:
 class Game:
     def __init__(self):
         pygame.init()
-        pygame.display.set_caption('Pacman - Simple OOP Clone')
+        pygame.display.set_caption("Pacman - Simple OOP Clone")
         self.screen = pygame.display.set_mode((SCREEN_WIDTH, SCREEN_HEIGHT))
         self.clock = pygame.time.Clock()
-        self.font = pygame.font.SysFont('arial', 20)
+        self.font = pygame.font.SysFont("arial", 20)
 
         self.maze = Maze()
 
@@ -409,8 +429,8 @@ class Game:
 
         # Ghosts in house area
         self.ghosts = [
-            Ghost('Blinky', RED, (13, 14), 'chaser'),
-            Ghost('Pinky', PINK, (14, 14), 'random'),
+            Ghost("Blinky", RED, (13, 14), "chaser"),
+            Ghost("Pinky", PINK, (14, 14), "random"),
         ]
 
         self.score = 0
@@ -447,9 +467,9 @@ class Game:
 
         # Eat pellets
         ate = self.maze.eat(self.player.cell)
-        if ate == 'dot':
+        if ate == "dot":
             self.score += 10
-        elif ate == 'power':
+        elif ate == "power":
             self.score += 50
             self.ghost_combo = 0
             for g in self.ghosts:
@@ -487,7 +507,16 @@ class Game:
         for y, row in enumerate(self.maze.grid):
             for x, c in enumerate(row):
                 if c == GHOST_GATE:
-                    pygame.draw.rect(self.screen, WHITE, (x * CELL_SIZE + 4, y * CELL_SIZE + CELL_SIZE//2 - 2, CELL_SIZE - 8, 4))
+                    pygame.draw.rect(
+                        self.screen,
+                        WHITE,
+                        (
+                            x * CELL_SIZE + 4,
+                            y * CELL_SIZE + CELL_SIZE // 2 - 2,
+                            CELL_SIZE - 8,
+                            4,
+                        ),
+                    )
         # Draw actors
         self.player.draw(self.screen)
         for g in self.ghosts:
@@ -496,7 +525,9 @@ class Game:
 
         if self.game_over:
             over = self.font.render("GAME OVER - Press R to Restart", True, WHITE)
-            self.screen.blit(over, (SCREEN_WIDTH // 2 - over.get_width() // 2, SCREEN_HEIGHT // 2))
+            self.screen.blit(
+                over, (SCREEN_WIDTH // 2 - over.get_width() // 2, SCREEN_HEIGHT // 2)
+            )
 
         pygame.display.flip()
 
@@ -514,5 +545,5 @@ class Game:
             self.handle_restart()
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     Game().run()
